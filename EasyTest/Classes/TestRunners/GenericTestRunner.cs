@@ -1,10 +1,14 @@
 ﻿using EasyTest.Classes.Scripts;
+using EasyTest.Factories;
 using EasyTest.Interfaces;
+using EasyTest.Models;
 using EasyTest.Models.TestTypes;
 using Microsoft.ClearScript.V8;
 using Serilog;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace EasyTest.Classes.TestRunner
@@ -25,29 +29,31 @@ namespace EasyTest.Classes.TestRunner
         private void SetupEngine(V8ScriptEngine engine)
         {
             engine.AddHostObject("variables", variables);
-            engine.AddHostType("log", typeof(Log));
-            engine.AddHostType("file", typeof(File));
-            engine.AddHostType("assert", typeof(Assert));
             engine.AddHostObject("test", test);
             engine.AddHostObject("httpClient", httpClient);
         }
 
-
-        public void Run(BaseTestType test)
+        public async Task<List<TestResult>> RunAsync(BaseTestType test)
         {
-            using (var engine = new V8ScriptEngine())
+            var engine = ScriptEngineFactory.GetEngine();
+            SetupEngine(engine);
+            RestApiTestType testType = test as RestApiTestType;
+            List<TestResult> results = new List<TestResult>();
+            foreach (var script in testType.PreRequestScripts)
             {
-                SetupEngine(engine);
-                GenericTestType testType = test as GenericTestType;
-                if (!engine.ExecuteScript(testType.PreRequestScript))
+                if (!engine.ExecuteScript(script))
                 {
-                    return;
-                }
-                if (!engine.ExecuteTests(testType.TestScript))
-                {
-                    return;
+                    continue;
                 }
             }
+            foreach (var script in testType.TestScripts)
+            {
+                if (engine.ExecuteTests(script))
+                {
+                    results.AddRange(this.test.Results);
+                }
+            }
+            return await Task.FromResult(results);
         }
     }
 }

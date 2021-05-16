@@ -2,7 +2,7 @@
   "profiles": {
     "EasyTest": {
       "commandName": "Project",
-      "commandLineArgs": "\".\\projects\\testproject.json\""
+      "commandLineArgs": "\".\\projects\\testproject.json\" "
     }
   }
 }

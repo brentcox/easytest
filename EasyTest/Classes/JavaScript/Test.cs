@@ -1,29 +1,43 @@
 ﻿using EasyTest.Classes.Scripts;
+using EasyTest.Factories;
 using EasyTest.Interfaces;
 using EasyTest.Models;
 using Microsoft.ClearScript;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace EasyTest.Classes.JavaScript
 {
     public class Test : ITest
     {
-        Dictionary<string, ScriptError> results = new Dictionary<string, ScriptError>();
+        public List<TestResult> Results { get; } = new List<TestResult>();
 
         public void Run(string description, ScriptObject callBack)
         {
+            Stopwatch sw = new Stopwatch();
+            ScriptError error = null;
             try
             {
+                sw.Start();
                 callBack.Invoke(false);
-            }catch(ScriptEngineException e)
+                sw.Stop();
+            }
+            catch (ScriptEngineException e)
             {
-                var result = ScriptParserExtensions.ParseError(e, string.Empty);
-                if (result.ErrorType == Enum.ErrorTypes.Script)
+                error = ScriptParserExtensions.ParseError(e, string.Empty);
+                if (error.ErrorType == Enum.ErrorTypes.Script)
                 {
                     throw;
                 }
-                results.Add(description, result);
             }
+            var result = new TestResult(description, error, DateTime.Now, sw.Elapsed);
+            Results.Add(result);
+            foreach (var formatter in TestResultFormatterFactory.GetFormatters())
+            {
+                formatter.Process(result);
+            }
+
         }
     }
 }

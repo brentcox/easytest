@@ -15,6 +15,10 @@ namespace EasyTest.Classes.Scripts
             {
                 int start = error.ErrorDetails.IndexOf("at Script [") + "at Script [".Length;
                 int end = error.ErrorDetails.IndexOf("->") - start;
+                if (end < 0)
+                {
+                    end = error.ErrorDetails.Length - start;
+                }
                 var lines = error.ErrorDetails.Substring(start, end).Split(':');
                 var line = lines[1];
                 var character = lines[2].Trim();

@@ -7,6 +7,22 @@ namespace EasyTest.Classes.Startup
 {
     public class RegisterTestRunners
     {
-        public void Register() => TestRunnerFactory.RegisterTestRunner<GenericTestRunner>(() => new GenericTestRunner(new Variables(), new Test(), new HttpClient()));
+        public void Register()
+        {
+            TestRunnerFactory.RegisterTestRunner<GenericTestRunner>(
+                () => new GenericTestRunner(
+                    new Variables(),
+                    new Test(),
+                    new HttpClient()
+                    )
+                );
+            TestRunnerFactory.RegisterTestRunner<RestApiTestRunner>(
+                () => new RestApiTestRunner(
+                    new Variables(),
+                    new Test(),
+                    new HttpClient()
+                    )
+                );
+        }
     }
 }
