@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EasyTest": {
+      "commandName": "Project",
+      "commandLineArgs": "\".\\projects\\testproject.json\""
+    }
+  }
+}
