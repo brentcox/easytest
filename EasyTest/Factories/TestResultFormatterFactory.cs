@@ -1,4 +1,5 @@
 ﻿using EasyTest.Interfaces;
+using EasyTest.Models.Results;
 using System.Collections.Generic;
 
 namespace EasyTest.Factories

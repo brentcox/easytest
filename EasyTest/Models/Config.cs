@@ -1,6 +1,6 @@
 ﻿namespace EasyTest.Models
 {
-    public record TestConfig(
+    public record Config(
         string Name,
         string Path,
         string Type

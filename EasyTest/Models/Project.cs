@@ -4,6 +4,6 @@ namespace EasyTest.Models
 {
     public record Project(
         string ProjectName,
-        List<TestGroup> Groups
+        List<Group> Groups
         );
 }

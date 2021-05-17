@@ -1,5 +1,6 @@
 ﻿using EasyTest.Interfaces;
 using EasyTest.Models;
+using EasyTest.Models.Results;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,41 +9,36 @@ namespace EasyTest.Classes.Formatters
 {
     public class ConsoleResultFormatter : ITestResultFormatter
     {
-        public void Process(TestResult result)
+        public void ProcessHeader(GroupResults groupResults)
         {
-            Console.WriteLine("Executed : " + result.TestName);
-            Console.WriteLine("Result   : " + (result.Error == null ? "Passed" : "Failed"));
-            Console.WriteLine("Duration : " + result.Duration.ToString());
+            Console.WriteLine("Executing Test Config - " + groupResults.Name);
+            Console.WriteLine("");
+        }
+
+        public void Process(ScriptTestResult result)
+        {
+            var desc = result.TestName.Length > 40 ? result.TestName.Substring(0, 40) : result.TestName.PadRight(40);
+            Console.WriteLine($"{desc} {(result.Error == null ? "Passed" : "Failed")} {result.Duration}" );
             var error = result.Error;
             if (error != null)
             {
                 Console.WriteLine(error.FileName + " Line " + error.Row + " Column " + error.Column + ")");
                 Console.WriteLine(error.Error);
             }
-            Console.WriteLine("");
         }
 
-        public void ProcessSummary(List<TestResult> results)
+        public void ProcessSummary(string groupName, List<TestRunnerResult> results)
         {
-            Console.WriteLine("Test Summary");
             Console.WriteLine("");
-            Console.WriteLine("---------------------------------------------------------------------------");
-            Console.WriteLine("| Name                                     | Result    | Execution        |");
-            Console.WriteLine("---------------------------------------------------------------------------");
-            foreach (var result in results)
-            {
-                var desc = result.TestName.Length > 40 ? result.TestName.Substring(0, 40) : result.TestName.PadRight(40); 
-                Console.WriteLine("| "+desc+" | "+(result.Error==null?"Passed":"Failed").ToString().PadRight(10)+"| "+result.Duration.ToString().PadRight(15) + " | ");
-            }
-            Console.WriteLine("---------------------------------------------------------------------------");
-            Console.WriteLine("");
-            Console.WriteLine("Total Run     : " + results.Count);
-            Console.WriteLine("Total Passed  : " + results.Count(a => a.Error == null));
-            Console.WriteLine("Total Failed  : " + results.Count(a => a.Error != null));
-            Console.WriteLine("Total Runtime : " + new TimeSpan(results.Sum(a => a.Duration.Ticks)));
+            var tests = results.SelectMany(a => a.TestResults).ToList();
+            Console.WriteLine("Total Run     : " + tests.Count);
+            Console.WriteLine("Total Passed  : " + tests.Count(a => a.Error == null));
+            Console.WriteLine("Total Failed  : " + tests.Count(a => a.Error != null));
+            Console.WriteLine("Total Runtime : " + new TimeSpan(tests.Sum(a => a.Duration.Ticks)));
 
-            var errors = results.Where(a => a.Error != null);
-            if (errors.Count() > 0) {
+            var errors = tests.Where(a => a.Error != null);
+            if (errors.Count() > 0)
+            {
                 Console.WriteLine("");
                 Console.WriteLine("Errors");
                 Console.WriteLine("");

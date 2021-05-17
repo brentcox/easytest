@@ -1,7 +1,6 @@
 ﻿using Microsoft.ClearScript.V8;
 using Serilog;
 using System.IO;
-using System.Net.Http;
 using Xunit;
 
 namespace EasyTest.Factories

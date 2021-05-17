@@ -3,17 +3,13 @@ using EasyTest.Classes.Scripts;
 using EasyTest.Exceptions;
 using EasyTest.Factories;
 using EasyTest.Interfaces;
-using EasyTest.Models;
+using EasyTest.Models.Results;
 using EasyTest.Models.TestTypes;
 using Microsoft.ClearScript.V8;
-using Serilog;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace EasyTest.Classes.TestRunner
 {
@@ -75,12 +71,12 @@ namespace EasyTest.Classes.TestRunner
 
         }
 
-        public async Task<List<TestResult>> RunAsync(BaseTestType test)
+        public async Task<TestRunnerResult> RunAsync(string name, BaseTestType test)
         {
             var engine = ScriptEngineFactory.GetEngine();
             SetupEngine(engine);
             RestApiTestType respApiTest = test as RestApiTestType;
-            List<TestResult> results = new List<TestResult>();
+            List<ScriptTestResult> results = new List<ScriptTestResult>();
             foreach (var script in respApiTest.PreRequestScripts)
             {
                 if (!engine.ExecuteScript(script))
@@ -112,7 +108,8 @@ namespace EasyTest.Classes.TestRunner
                     results.AddRange(this.test.Results);
                 }
             }
-            return results;
+            sw.Stop();
+            return await Task.FromResult(new TestRunnerResult(name, sw.Elapsed, results));
         }
     }
 }

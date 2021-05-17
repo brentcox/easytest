@@ -2,6 +2,7 @@
 using EasyTest.Factories;
 using EasyTest.Interfaces;
 using EasyTest.Models;
+using EasyTest.Models.Results;
 using Microsoft.ClearScript;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,16 @@ namespace EasyTest.Classes.JavaScript
 {
     public class Test : ITest
     {
-        public List<TestResult> Results { get; } = new List<TestResult>();
+        private readonly string name;
+
+        public Test(string name)
+        {
+            this.name = name;
+        }
+
+        public Group TestGroup { get; set; }
+
+        public List<ScriptTestResult> Results { get; } = new List<ScriptTestResult>();
 
         public void Run(string description, ScriptObject callBack)
         {
@@ -31,7 +41,7 @@ namespace EasyTest.Classes.JavaScript
                     throw;
                 }
             }
-            var result = new TestResult(description, error, DateTime.Now, sw.Elapsed);
+            var result = new ScriptTestResult(name + "/" + description, error, DateTime.Now, sw.Elapsed);
             Results.Add(result);
             foreach (var formatter in TestResultFormatterFactory.GetFormatters())
             {

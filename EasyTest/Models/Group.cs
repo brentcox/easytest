@@ -2,8 +2,8 @@
 
 namespace EasyTest.Models
 {
-    public record TestGroup(
+    public record Group(
         string Name,
-        List<TestConfig> Tests
+        List<Config> Tests
     );
 }
