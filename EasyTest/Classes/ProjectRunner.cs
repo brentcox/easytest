@@ -1,4 +1,5 @@
-﻿using EasyTest.Factories;
+﻿using EasyTest.Classes.Formatters;
+using EasyTest.Factories;
 using EasyTest.Interfaces;
 using EasyTest.Models;
 using EasyTest.Models.Results;
@@ -20,29 +21,24 @@ namespace EasyTest.Classes
             this.project = project;
             this.targetTest = targetTest;
         }
-
+     
         public async Task RunAsync()
         {
-            IEnumerable<ITestResultFormatter> formatters = TestResultFormatterFactory.GetFormatters();
-            ProjectResults results = new ProjectResults(project.ProjectName, new List<GroupResults>());
+            ITestResultFormatter formatter = new ConsoleResultFormatter();
+            ProjectResults results = new ProjectResults(project.ProjectName, DateTime.Now, new List<GroupResults>());
             foreach (var testGroup in project.Groups) {
                 var group = new GroupResults(testGroup.Name, new List<TestRunnerResult>());
                 results.GroupResults.Add(group);
-                foreach (var formatter in TestResultFormatterFactory.GetFormatters())
-                {
-                    formatter.ProcessHeader(group);
-                }
+                formatter.ProcessHeader(group);
                 foreach (var testConfig in testGroup.Tests.Where(a => targetTest == string.Empty || (a.Name.ToLower() == targetTest.ToLower())))
                 {
                     Type type = Type.GetType($"EasyTest.Classes.TestRunner.{testConfig.Type}TestRunner");
                     var testRunner = TestRunnerFactory.GetRunner(type, testConfig.Name);
                     group.TestRunnerResults.Add(await testRunner.RunAsync(testConfig.Name, await ProjectFactory.LoadFileAsync<RestApiTestType>(testConfig.Path)));
                 }
-                foreach (var formatter in formatters)
-                {
-                    formatter.ProcessSummary(group.Name, group.TestRunnerResults);
-                }
+                formatter.ProcessSummary(group.Name, group.TestRunnerResults);
             }
+            results.FinishedAt = DateTime.Now;
         }
     }
 }

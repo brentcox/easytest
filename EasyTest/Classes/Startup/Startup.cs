@@ -51,7 +51,6 @@ namespace EasyTest.Classes.Startup
             ConfigureLogging();
             await ApplyParametersAsync(args);
             new RegisterTestRunners().Register();
-            new RegisterTestResultFormatters().Register();
         }
     }
 }

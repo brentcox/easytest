@@ -1,5 +1,5 @@
-﻿using EasyTest.Classes.Scripts;
-using EasyTest.Factories;
+﻿using EasyTest.Classes.Formatters;
+using EasyTest.Classes.Scripts;
 using EasyTest.Interfaces;
 using EasyTest.Models;
 using EasyTest.Models.Results;
@@ -43,11 +43,7 @@ namespace EasyTest.Classes.JavaScript
             }
             var result = new ScriptTestResult(name + "/" + description, error, DateTime.Now, sw.Elapsed);
             Results.Add(result);
-            foreach (var formatter in TestResultFormatterFactory.GetFormatters())
-            {
-                formatter.Process(result);
-            }
-
+            new ConsoleResultFormatter().Process(result);
         }
     }
 }

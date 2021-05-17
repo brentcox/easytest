@@ -1,5 +1,6 @@
 ﻿using EasyTest.Interfaces;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace EasyTest.Classes.JavaScript
 {
@@ -19,6 +20,24 @@ namespace EasyTest.Classes.JavaScript
         public object Get(string name)
         {
             return variables[name];
+        }
+
+        public bool Exists(string name)
+        {
+            return variables.ContainsKey(name);
+        }
+
+        public string Parse(string value)
+        {
+            Regex regex = new Regex("(?<={{)(.*?)(?=}})");
+            foreach (Match match in regex.Matches(value))
+            {
+                if (Exists(match.Value))
+                {
+                    value = value.Replace("{{" + match.Value + "}}", Get(match.Value)?.ToString());
+                }
+            }
+            return value;
         }
     }
 }

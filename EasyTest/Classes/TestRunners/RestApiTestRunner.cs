@@ -6,8 +6,8 @@ using EasyTest.Interfaces;
 using EasyTest.Models.Results;
 using EasyTest.Models.TestTypes;
 using Microsoft.ClearScript.V8;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -71,45 +71,74 @@ namespace EasyTest.Classes.TestRunner
 
         }
 
-        public async Task<TestRunnerResult> RunAsync(string name, BaseTestType test)
+        private void ProcessHeaders(HttpClient client, string[] headers)
         {
-            var engine = ScriptEngineFactory.GetEngine();
-            SetupEngine(engine);
-            RestApiTestType respApiTest = test as RestApiTestType;
-            List<ScriptTestResult> results = new List<ScriptTestResult>();
-            foreach (var script in respApiTest.PreRequestScripts)
+            foreach (var header in headers)
+            {
+                var h = header.Split("=");
+                string hName = variables.Parse(h[0]);
+                string hValue = variables.Parse(h[1]);
+                client.DefaultRequestHeaders.Add(hName, hValue);
+            }
+        }
+
+        private void ExecutePreRequestScripts(V8ScriptEngine engine, string[] scripts)
+        {
+            foreach (var script in scripts)
             {
                 if (!engine.ExecuteScript(script))
                 {
                     continue;
                 }
             }
+        }
 
-            HttpClient client = new HttpClient();
-            foreach (var header in respApiTest.Headers)
-            {
-                var h = header.Split("=");
-                client.DefaultRequestHeaders.Add(h[0], h[1]);
-            }
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            HttpResponseMessage result = await ExecuteAsync(client, respApiTest.Method, respApiTest.Url, respApiTest.Body);
-
+        private async Task<RestApiResponse> ExecuteRequest(HttpClient client, RestApiTestType restApiTest)
+        {
+            HttpResponseMessage result = await ExecuteAsync(client, restApiTest.Method, restApiTest.Url, restApiTest.Body);
             var content = await result.Content.ReadAsStringAsync();
-            var response = new RestApiResponse((int)result.StatusCode, content);
-            sw.Stop();
-            engine.AddHostObject("restApiResponse", response);
+            return new RestApiResponse((int)result.StatusCode, content);
+        }
 
-            foreach (var script in respApiTest.TestScripts)
+        private List<ScriptTestResult> ExecuteTests(V8ScriptEngine engine, RestApiTestType restApiTest)
+        {
+            List<ScriptTestResult> results = new List<ScriptTestResult>();
+            foreach (var script in restApiTest.TestScripts)
             {
                 if (engine.ExecuteTests(script))
                 {
                     results.AddRange(this.test.Results);
                 }
             }
-            sw.Stop();
-            return await Task.FromResult(new TestRunnerResult(name, sw.Elapsed, results));
+            return results;
+
+        }
+
+        private async Task<(TimeSpan Duration, List<ScriptTestResult> Results)> ExecuteRequestAsync(V8ScriptEngine engine, RestApiTestType restApiTest)
+        {
+            HttpClient client = new HttpClient();
+            ProcessHeaders(client, restApiTest.Headers);
+            return await Timer.TimeAsync<List<ScriptTestResult>>(
+               async () => {
+                   var response = await ExecuteRequest(client, restApiTest);
+                   engine.AddHostObject("restApiResponse", response);
+
+                   return ExecuteTests(engine, restApiTest);
+               }
+           );
+        }
+
+        public async Task<TestRunnerResult> RunAsync(string name, BaseTestType test)
+        {
+            var engine = ScriptEngineFactory.GetEngine();
+            SetupEngine(engine);
+            var restApiTest = test as RestApiTestType;
+
+            ExecutePreRequestScripts(engine, restApiTest.PreRequestScripts);
+            
+            var result = await ExecuteRequestAsync(engine, restApiTest);
+
+            return await Task.FromResult(new TestRunnerResult(name, result.Duration, result.Results));
         }
     }
 }

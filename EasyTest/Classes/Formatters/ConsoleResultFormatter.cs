@@ -30,7 +30,7 @@ namespace EasyTest.Classes.Formatters
         public void ProcessSummary(string groupName, List<TestRunnerResult> results)
         {
             Console.WriteLine("");
-            var tests = results.SelectMany(a => a.TestResults).ToList();
+            var tests = results.SelectMany(a => a.ScriptTestResults).ToList();
             Console.WriteLine("Total Run     : " + tests.Count);
             Console.WriteLine("Total Passed  : " + tests.Count(a => a.Error == null));
             Console.WriteLine("Total Failed  : " + tests.Count(a => a.Error != null));
